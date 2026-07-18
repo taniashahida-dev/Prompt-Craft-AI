@@ -51,12 +51,12 @@ const getTemplateById = async (req, res) => {
 // @access  Private
 const createTemplate = async (req, res) => {
   try {
-    const { title, category, description, imageUrl } = req.body;
+    const { title, category, description, fullPrompt, tags, imageUrl } = req.body;
 
-    if (!title || !category || !description) {
+    if (!title || !category || !description || !fullPrompt) {
       return res.status(400).json({ 
         success: false, 
-        message: "Title, category, and description are required." 
+        message: "Title, category, description, and full prompt are required." 
       });
     }
 
@@ -64,6 +64,8 @@ const createTemplate = async (req, res) => {
       title,
       category,
       description,
+      fullPrompt,
+      tags: tags || [],
       imageUrl: imageUrl || "",
       createdBy: req.user.id
     });
@@ -97,10 +99,12 @@ const updateTemplate = async (req, res) => {
     }
 
     // Update fields (only update fields present in body)
-    const { title, category, description, imageUrl } = req.body;
+    const { title, category, description, fullPrompt, tags, imageUrl } = req.body;
     if (title !== undefined) template.title = title;
     if (category !== undefined) template.category = category;
     if (description !== undefined) template.description = description;
+    if (fullPrompt !== undefined) template.fullPrompt = fullPrompt;
+    if (tags !== undefined) template.tags = tags;
     if (imageUrl !== undefined) template.imageUrl = imageUrl;
 
     const updatedTemplate = await template.save();

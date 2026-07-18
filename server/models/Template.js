@@ -14,7 +14,16 @@ const templateSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: [true, "Please add a description"]
+      required: [true, "Please add a short description"],
+      trim: true
+    },
+    fullPrompt: {
+      type: String,
+      required: [true, "Please add the full prompt blueprint"]
+    },
+    tags: {
+      type: [String],
+      default: []
     },
     imageUrl: {
       type: String,

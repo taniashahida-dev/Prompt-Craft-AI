@@ -64,11 +64,31 @@ export default function Navbar() {
 
   const handleLinkClick = (e, id) => {
     e.preventDefault();
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setActiveSection(id);
+    const dashboardTabs = ["dashboard", "workspace", "history", "profile", "templates", "settings"];
+
+    if (dashboardTabs.includes(id)) {
+      const tabName = id === "dashboard" ? "overview" : id;
+      router.push(`/dashboard?tab=${tabName}`);
       setIsMobileMenuOpen(false);
+      return;
+    }
+
+    if (id === "explore") {
+      router.push("/explore");
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
+    if (typeof window !== "undefined" && window.location.pathname !== "/") {
+      router.push(`/#${id}`);
+      setIsMobileMenuOpen(false);
+    } else {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActiveSection(id);
+        setIsMobileMenuOpen(false);
+      }
     }
   };
 
@@ -288,7 +308,7 @@ export default function Navbar() {
                         Profile
                       </button>
                       <button 
-                        onClick={(e) => { handleLinkClick(e, "profile"); setIsProfileDropdownOpen(false); }}
+                        onClick={(e) => { handleLinkClick(e, "settings"); setIsProfileDropdownOpen(false); }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
                       >
                         <Settings className="h-4 w-4" />
