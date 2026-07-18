@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Sparkles, Play, Terminal, FileText, Mail, Share2, Copy, Check, RefreshCw } from "lucide-react";
 
-export default function Hero({ onLogin, isAuthenticated }) {
+export default function Hero({ onLogin, isAuthenticated, onPromptGenerated }) {
   const templates = [
     {
       id: "blog",
@@ -73,6 +73,14 @@ export default function Hero({ onLogin, isAuthenticated }) {
           } else {
             clearInterval(streamInterval);
             setIsGenerating(false);
+            if (onPromptGenerated) {
+              onPromptGenerated({
+                prompt: template.prompt,
+                output: template.output,
+                category: template.name,
+                words: template.output.split(" ").length
+              });
+            }
           }
         }, 60);
       }
@@ -84,6 +92,7 @@ export default function Hero({ onLogin, isAuthenticated }) {
       simulateGeneration(activeTab);
     }, 0);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const handleCopy = () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import TrustedCompanies from "@/components/TrustedCompanies";
@@ -13,6 +14,8 @@ import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
+import { useAuth } from "../context/AuthContext";
+import api from "../utils/api";
 
 // Additional Lucide icons for dashboard layouts
 import { 
@@ -22,38 +25,52 @@ import {
 } from "lucide-react";
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated, user, logout, loading } = useAuth();
   const [copiedKey, setCopiedKey] = useState(false);
-  const [historyItems, setHistoryItems] = useState([
-    { id: 1, prompt: "Create a welcome email for PromptCraft", time: "10m ago", category: "Email", words: 120 },
-    { id: 2, prompt: "Write FastAPI custom router with JWT token auth", time: "1h ago", category: "Coding", words: 240 },
-    { id: 3, prompt: "Write engaging LinkedIn announcement post", time: "1d ago", category: "Social", words: 85 }
-  ]);
+  const [historyItems, setHistoryItems] = useState([]);
+  const [fetchingHistory, setFetchingHistory] = useState(false);
 
-  // Check if simulated JWT exists on initial load
+  // Fetch real history data from backend Mongoose API
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("promptcraft_jwt");
-      if (token) {
-        setTimeout(() => {
-          setIsAuthenticated(true);
-        }, 0);
+    const fetchHistory = async () => {
+      if (isAuthenticated) {
+        setFetchingHistory(true);
+        try {
+          const res = await api.get("/prompts");
+          if (res.data && res.data.success) {
+            setHistoryItems(res.data.data);
+          }
+        } catch (err) {
+          console.error("Failed to fetch history:", err.message);
+        }
+        setFetchingHistory(false);
       }
-    }
-  }, []);
+    };
+    fetchHistory();
+  }, [isAuthenticated]);
+
+  // Loading gate — shown while AuthContext verifies token on mount
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#030014] text-slate-100 flex flex-col items-center justify-center relative px-4">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-25 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[300px] rounded-full bg-purple-600/10 blur-[100px] pointer-events-none" />
+        <div className="flex flex-col items-center gap-4 relative z-10">
+          <div className="relative">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 animate-pulse shadow-lg shadow-purple-500/20 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-white animate-spin-slow" />
+            </div>
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 blur opacity-30 animate-pulse" />
+          </div>
+          <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase animate-pulse">Loading PromptCraft...</span>
+        </div>
+      </div>
+    );
+  }
 
   const handleLogin = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("promptcraft_jwt", "mock-jwt-header-token-12345");
-      setIsAuthenticated(true);
-    }
-  };
-
-  const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("promptcraft_jwt");
-      setIsAuthenticated(false);
-    }
+    router.push("/login");
   };
 
   const handleCopyKey = () => {
@@ -62,8 +79,26 @@ export default function Home() {
     setTimeout(() => setCopiedKey(false), 2000);
   };
 
-  const handleDeleteHistory = (id) => {
-    setHistoryItems(historyItems.filter(item => item.id !== id));
+  const handlePromptGenerated = async (promptData) => {
+    try {
+      const res = await api.post("/prompts", promptData);
+      if (res.data && res.data.success) {
+        setHistoryItems(prev => [res.data.data, ...prev]);
+      }
+    } catch (err) {
+      console.error("Failed to log prompt completion:", err.message);
+    }
+  };
+
+  const handleDeleteHistory = async (id) => {
+    try {
+      const res = await api.delete(`/prompts/${id}`);
+      if (res.data && res.data.success) {
+        setHistoryItems(historyItems.filter(item => item._id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete history item:", err.message);
+    }
   };
 
   return (
@@ -74,12 +109,7 @@ export default function Home() {
       {/* Dynamic ambient background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[500px] w-full max-w-7xl bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
 
-      {/* Dynamic navbar (Sticky, active highlighting scroll-spy) */}
-      <Navbar 
-        isAuthenticated={isAuthenticated} 
-        onLogin={handleLogin} 
-        onLogout={handleLogout} 
-      />
+      <Navbar />
       
       {/* Main Content Layout */}
       <main className="flex-1 relative z-10 pt-16">
@@ -226,7 +256,7 @@ export default function Home() {
                   Select predefined tabs or type complex prompt queries to stream AI content immediately.
                 </p>
               </div>
-              <Hero isAuthenticated={isAuthenticated} onLogin={handleLogin} />
+              <Hero isAuthenticated={isAuthenticated} onLogin={handleLogin} onPromptGenerated={handlePromptGenerated} />
             </section>
 
             {/* 5. HISTORY PANEL (List of past prompts with delete / copy metrics) */}
@@ -242,7 +272,7 @@ export default function Home() {
                 {historyItems.length > 0 ? (
                   <div className="divide-y divide-white/5">
                     {historyItems.map((item) => (
-                      <div key={item.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/2 transition-colors">
+                      <div key={item._id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/2 transition-colors">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-white truncate max-w-md">
@@ -253,7 +283,7 @@ export default function Home() {
                             </span>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-                            <span>{item.time}</span>
+                            <span>{new Date(item.createdAt).toLocaleDateString()} at {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             <span>•</span>
                             <span>{item.words} words generated</span>
                           </div>
@@ -270,7 +300,7 @@ export default function Home() {
                             <Copy className="h-4 w-4" />
                           </button>
                           <button 
-                            onClick={() => handleDeleteHistory(item.id)}
+                            onClick={() => handleDeleteHistory(item._id)}
                             className="p-2 rounded-lg bg-pink-500/10 border border-pink-500/10 hover:border-pink-500/20 text-pink-400 hover:bg-pink-500/20 transition-colors cursor-pointer"
                             title="Delete Log"
                           >

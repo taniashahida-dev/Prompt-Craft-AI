@@ -1,13 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
 import { 
   Menu, X, Bell, User, LogOut, Settings, 
   Sparkles, ChevronDown, Check, Home, Compass, 
   LayoutDashboard, Terminal, History, UserCheck
 } from "lucide-react";
 
-export default function Navbar({ isAuthenticated, onLogin, onLogout }) {
+export default function Navbar() {
+  const router = useRouter();
+  const { isAuthenticated, user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -211,13 +215,13 @@ export default function Navbar({ isAuthenticated, onLogin, onLogout }) {
             {!isAuthenticated ? (
               <>
                 <button 
-                  onClick={onLogin}
+                  onClick={() => router.push("/login")}
                   className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition-all cursor-pointer"
                 >
                   Login
                 </button>
                 <button 
-                  onClick={onLogin}
+                  onClick={() => router.push("/register")}
                   className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-sm font-bold text-white hover:shadow-lg hover:shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   Register
@@ -274,7 +278,7 @@ export default function Navbar({ isAuthenticated, onLogin, onLogout }) {
                     <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl border border-white/10 bg-[#0c0824] p-2 text-slate-200 shadow-xl shadow-black/80 ring-1 ring-black/5 focus:outline-none">
                       <div className="px-3 py-2.5 border-b border-white/5 mb-1.5">
                         <p className="text-xs text-slate-400">Signed in as</p>
-                        <p className="text-sm font-semibold truncate text-white">alex.morgan@promptcraft.ai</p>
+                        <p className="text-sm font-semibold truncate text-white">{user?.email || "alex.morgan@promptcraft.ai"}</p>
                       </div>
                       <button 
                         onClick={(e) => { handleLinkClick(e, "profile"); setIsProfileDropdownOpen(false); }}
@@ -293,7 +297,7 @@ export default function Navbar({ isAuthenticated, onLogin, onLogout }) {
                       <div className="h-px bg-white/5 my-1.5" />
                       <button 
                         onClick={() => {
-                          onLogout();
+                          logout();
                           setIsProfileDropdownOpen(false);
                         }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-sm text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 rounded-lg transition-all cursor-pointer"
@@ -366,13 +370,13 @@ export default function Navbar({ isAuthenticated, onLogin, onLogout }) {
                 <div className="h-px bg-white/10 my-4" />
                 <div className="flex flex-col gap-2 pt-2">
                   <button 
-                    onClick={() => { onLogin(); setIsMobileMenuOpen(false); }}
+                    onClick={() => { router.push("/login"); setIsMobileMenuOpen(false); }}
                     className="w-full py-2.5 text-center text-sm font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all cursor-pointer"
                   >
                     Login
                   </button>
                   <button 
-                    onClick={() => { onLogin(); setIsMobileMenuOpen(false); }}
+                    onClick={() => { router.push("/register"); setIsMobileMenuOpen(false); }}
                     className="w-full py-2.5 text-center text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all cursor-pointer"
                   >
                     Register
@@ -452,8 +456,8 @@ export default function Navbar({ isAuthenticated, onLogin, onLogout }) {
                     className="h-10 w-10 rounded-full object-cover ring-2 ring-purple-500"
                   />
                   <div>
-                    <p className="text-sm font-semibold text-white">Alex Morgan</p>
-                    <p className="text-xs text-slate-400">alex.morgan@promptcraft.ai</p>
+                    <p className="text-sm font-semibold text-white">{user?.name || "Alex Morgan"}</p>
+                    <p className="text-xs text-slate-400">{user?.email || "alex.morgan@promptcraft.ai"}</p>
                   </div>
                 </div>
 
@@ -473,9 +477,9 @@ export default function Navbar({ isAuthenticated, onLogin, onLogout }) {
                     Settings
                   </button>
                 </div>
-                <button 
+                 <button 
                   onClick={() => {
-                    onLogout();
+                    logout();
                     setIsMobileMenuOpen(false);
                   }}
                   className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-pink-400 hover:text-pink-300 bg-pink-500/10 hover:bg-pink-500/20 rounded-xl transition-all cursor-pointer"
