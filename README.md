@@ -16,9 +16,9 @@ PromptCraft AI enables creators, marketers, developers, and writers to easily de
 
 ## 🔗 Links
 
-- **Live Demo**: [Insert Live Demo Link Here]
-- **Frontend Repository**: [Insert Frontend Repo Link Here]
-- **Backend Repository**: [Insert Backend Repo Link Here]
+- **Live Demo**: https://prompt-craft-ai-wine.vercel.app
+- **Frontend Repository**: https://github.com/taniashahida-dev/Prompt-Craft-AI
+- **Backend Repository**: https://github.com/taniashahida-dev/Prompt-Craft-AI/tree/main/server
 
 ---
 
@@ -220,9 +220,12 @@ sequenceDiagram
 ## 📸 Screenshots
 
 *Insert portfolio screenshots here:*
-- **Dashboard**: `[Placeholder: Add Dashboard Screenshot Here]`
-- **AI Workspace**: `[Placeholder: Add Workspace Screenshot Here]`
-- **Explore Gallery**: `[Placeholder: Add Explore Gallery Screenshot Here]`
+- **Dashboard**: `<img width="1920" height="915" alt="image" src="https://github.com/user-attachments/assets/2fc74ee7-6f3b-43b7-acf6-19dfb13f4fd0" />
+`
+- **AI Workspace**: `<img width="1920" height="914" alt="image" src="https://github.com/user-attachments/assets/d70a75f8-a0cf-4aa0-adb9-08d7abc2a967" />
+`
+- **Explore Gallery**: `<img width="1904" height="917" alt="image" src="https://github.com/user-attachments/assets/8279583c-08ed-4f58-a27d-36c50cd670aa" />
+`
 
 ---
 
@@ -266,12 +269,9 @@ sequenceDiagram
 
 ## 👤 Author Information
 
-- **Name**: [Insert Your Name Here]
-- **LinkedIn**: [Insert Your LinkedIn Profile Here]
-- **Portfolio**: [Insert Your Portfolio Link Here]
+- **Name**: Tania
+- **LinkedIn**: https://www.linkedin.com/in/tania9
+- **Portfolio**: https://tania-webdev.vercel.app/
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
