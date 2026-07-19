@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { toast } from "react-hot-toast";
 import { 
   LayoutDashboard, Terminal, History, Sparkles, 
   User, Settings, LogOut, Menu, X, Plus, Edit2, 
@@ -348,16 +349,45 @@ function DashboardContent() {
     }
   };
 
-  const handleDeleteTemplate = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this template?")) return;
-    try {
-      const res = await api.delete(`/templates/${id}`);
-      if (res.data && res.data.success) {
-        setTemplates(prev => prev.filter(t => t._id !== id));
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete template.");
-    }
+  const handleDeleteTemplate = (id) => {
+    toast((t) => (
+      <div className="flex flex-col gap-2.5">
+        <span className="text-xs font-semibold text-slate-100">Are you sure you want to delete this template?</span>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+            }}
+            className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] font-bold text-slate-300 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              const loadId = toast.loading("Deleting template...");
+              try {
+                const res = await api.delete(`/templates/${id}`);
+                if (res.data && res.data.success) {
+                  setTemplates(prev => prev.filter(t => t._id !== id));
+                  toast.success("Template deleted successfully!", { id: loadId });
+                } else {
+                  toast.error("Failed to delete template.", { id: loadId });
+                }
+              } catch (err) {
+                toast.error(err.response?.data?.message || "Failed to delete template.", { id: loadId });
+              }
+            }}
+            className="px-2.5 py-1 rounded bg-pink-600 hover:bg-pink-500 text-[10px] font-bold text-white transition-colors cursor-pointer"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 8000,
+      position: "top-center"
+    });
   };
 
   // Helper to copy API key
