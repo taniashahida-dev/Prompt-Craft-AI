@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# PromptCraft AI
 
-## Getting Started
+PromptCraft AI is an advanced workspace playground and community template catalog designed for crafting, optimizing, and organizing AI prompts. Powered by Google Gemini, next-generation analytics, and secure OAuth.
 
-First, run the development server:
+---
 
+## 🛠️ Getting Started Locally
+
+### 1. Database & Backend Setup
+Navigate to the `server` directory, configure your environment, install dependencies, and run:
 ```bash
+cd server
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Frontend Setup
+Navigate to the root directory, install dependencies, and run:
+```bash
+npm install
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Production Deployment Instructions
 
-## Learn More
+### 1. Database Setup: MongoDB Atlas
+1. Sign in to your [MongoDB Atlas account](https://www.mongodb.com/cloud/atlas).
+2. Create a new Database Cluster and click **Connect**.
+3. Under **Connect to your application**, select the Driver as **Node.js** and copy the connection string (SRV URI).
+4. Replace `<password>` and database name with your credentials. Keep this URL safe for Render environment variables.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Backend Deployment: Render
+1. Sign in to [Render](https://render.com/).
+2. Click **New** -> **Web Service** and connect your GitHub repository.
+3. Configure the following service settings:
+   - **Root Directory**: `server`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+4. Add the following **Environment Variables** in Render settings:
+   - `PORT`: `5000` (or leave default)
+   - `MONGO_URI`: `mongodb+srv://...` (your MongoDB Atlas connection string)
+   - `JWT_SECRET`: `your_secure_token_secret`
+   - `JWT_EXPIRE`: `30d`
+   - `GEMINI_API_KEY`: `your_gemini_api_key_value`
+   - `GOOGLE_CLIENT_ID`: `your_google_oauth_client_id.apps.googleusercontent.com`
+   - `GOOGLE_CLIENT_SECRET`: `your_google_oauth_client_secret`
+   - `GOOGLE_CALLBACK_URL`: `https://your-backend-app.onrender.com/api/auth/google/callback`
+   - `CLIENT_URL`: `https://your-frontend-app.vercel.app`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 3. Frontend Deployment: Vercel
+1. Sign in to [Vercel](https://vercel.com/).
+2. Click **Add New** -> **Project** and select your GitHub repository.
+3. Vercel automatically detects the Next.js project. Configure the settings:
+   - **Root Directory**: `./` (Root directory of the repository)
+   - **Build Command**: `npm run build`
+   - **Install Command**: `npm install`
+4. Add the following **Environment Variable** in Vercel settings:
+   - `NEXT_PUBLIC_API_URL`: `https://your-backend-app.onrender.com/api` (URL of your Render backend API)
+5. Click **Deploy**.

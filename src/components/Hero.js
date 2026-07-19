@@ -132,7 +132,8 @@ export default function Hero({ onLogin, isAuthenticated, onPromptGenerated }) {
             <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
               <button 
                 onClick={onLogin}
-                className="flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                href="/dashboard"
+                className="flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 {isAuthenticated ? "Go to Dashboard" : "Start Generating Free"}
               </button>

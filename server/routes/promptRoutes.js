@@ -3,12 +3,17 @@ const router = express.Router();
 const { 
   savePrompt, 
   getUserHistory, 
-  deleteHistoryItem 
+  deleteHistoryItem,
+  generateAIContent,
+  improvePrompt
 } = require("../controllers/promptController");
 const { protect } = require("../middleware/authMiddleware");
 
 // All prompts routes are protected
 router.use(protect);
+
+router.post("/generate", generateAIContent);
+router.post("/improve", improvePrompt);
 
 router.route("/")
   .post(savePrompt)

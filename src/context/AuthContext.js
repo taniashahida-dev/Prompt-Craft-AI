@@ -44,11 +44,28 @@ export function AuthProvider({ children }) {
       if (res.data && res.data.success) {
         const userData = res.data.data;
         localStorage.setItem("promptcraft_jwt", userData.token);
-        setUser({
-          _id: userData._id,
-          name: userData.name,
-          email: userData.email
-        });
+        
+        // Fetch full profile to get mongoose attributes
+        try {
+          const profileRes = await api.get("/auth/profile");
+          if (profileRes.data && profileRes.data.success) {
+            setUser(profileRes.data.data);
+          } else {
+            setUser({
+              _id: userData._id,
+              name: userData.name,
+              email: userData.email
+            });
+          }
+        } catch (profileErr) {
+          console.error("Profile fetch after login failed:", profileErr);
+          setUser({
+            _id: userData._id,
+            name: userData.name,
+            email: userData.email
+          });
+        }
+        
         setLoading(false);
         router.push("/");
         return { success: true };
@@ -56,6 +73,48 @@ export function AuthProvider({ children }) {
     } catch (err) {
       setLoading(false);
       const msg = err.response?.data?.message || "Invalid credentials.";
+      setError(msg);
+      throw new Error(msg);
+    }
+  };
+
+  // Google Auth handler
+  const googleAuth = async (credential) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.post("/auth/google", { credential });
+      if (res.data && res.data.success) {
+        const userData = res.data.data;
+        localStorage.setItem("promptcraft_jwt", userData.token);
+        
+        try {
+          const profileRes = await api.get("/auth/profile");
+          if (profileRes.data && profileRes.data.success) {
+            setUser(profileRes.data.data);
+          } else {
+            setUser({
+              _id: userData._id,
+              name: userData.name,
+              email: userData.email
+            });
+          }
+        } catch (profileErr) {
+          console.error("Profile fetch after Google login failed:", profileErr);
+          setUser({
+            _id: userData._id,
+            name: userData.name,
+            email: userData.email
+          });
+        }
+        
+        setLoading(false);
+        router.push("/");
+        return { success: true };
+      }
+    } catch (err) {
+      setLoading(false);
+      const msg = err.response?.data?.message || "Google authentication failed.";
       setError(msg);
       throw new Error(msg);
     }
@@ -75,6 +134,7 @@ export function AuthProvider({ children }) {
     loading,
     error,
     login,
+    googleAuth,
     logout,
     setUser,
     setError

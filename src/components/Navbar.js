@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { 
   Menu, X, Bell, User, LogOut, Settings, 
@@ -11,12 +11,36 @@ import {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState("home");
+
+  // Determine active section purely from path/pathname
+  let activeSection = "home";
+  if (pathname === "/explore") {
+    activeSection = "explore";
+  } else if (pathname === "/pricing") {
+    activeSection = "pricing";
+  } else if (pathname === "/about") {
+    activeSection = "about";
+  } else if (pathname === "/contact") {
+    activeSection = "contact";
+  } else if (pathname === "/dashboard/workspace") {
+    activeSection = "workspace";
+  } else if (pathname === "/dashboard/history") {
+    activeSection = "history";
+  } else if (pathname === "/dashboard/templates" || pathname?.startsWith("/dashboard/templates/")) {
+    activeSection = "templates";
+  } else if (pathname === "/dashboard/prompt-improver") {
+    activeSection = "improver";
+  } else if (pathname === "/dashboard" || pathname?.startsWith("/dashboard")) {
+    activeSection = "dashboard";
+  } else if (pathname === "/") {
+    activeSection = "home";
+  }
 
   // Check scroll position for glassmorphic navbar styling
   useEffect(() => {
@@ -27,48 +51,42 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Intersection Observer for scroll spy (Active Link Highlighting)
-  useEffect(() => {
-    const sections = isAuthenticated
-      ? ["home", "explore", "dashboard", "workspace", "history", "profile"]
-      : ["home", "explore", "about", "contact"];
-
-    const observerOptions = {
-      root: null,
-      rootMargin: "-30% 0px -50% 0px", // triggers when section is in the middle of viewport
-      threshold: 0.1,
-    };
-
-    const observerCallback = (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
-    };
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    sections.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
-    return () => {
-      sections.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) observer.unobserve(el);
-      });
-    };
-  }, [isAuthenticated]);
-
   const handleLinkClick = (e, id) => {
     e.preventDefault();
-    const dashboardTabs = ["dashboard", "workspace", "history", "profile", "templates", "settings"];
+    const dashboardTabs = ["dashboard", "profile", "templates", "settings"];
 
-    if (dashboardTabs.includes(id)) {
-      const tabName = id === "dashboard" ? "overview" : id;
-      router.push(`/dashboard?tab=${tabName}`);
+    if (id === "home") {
+      router.push("/");
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
+    if (id === "about") {
+      router.push("/about");
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
+    if (id === "contact") {
+      router.push("/contact");
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
+    if (id === "workspace") {
+      router.push("/dashboard/workspace");
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
+    if (id === "improver") {
+      router.push("/dashboard/prompt-improver");
+      setIsMobileMenuOpen(false);
+      return;
+    }
+
+    if (id === "history") {
+      router.push("/dashboard/history");
       setIsMobileMenuOpen(false);
       return;
     }
@@ -79,16 +97,17 @@ export default function Navbar() {
       return;
     }
 
-    if (typeof window !== "undefined" && window.location.pathname !== "/") {
-      router.push(`/#${id}`);
+    if (id === "pricing") {
+      router.push("/pricing");
       setIsMobileMenuOpen(false);
-    } else {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        setActiveSection(id);
-        setIsMobileMenuOpen(false);
-      }
+      return;
+    }
+
+    if (dashboardTabs.includes(id)) {
+      const tabName = id === "dashboard" ? "overview" : id;
+      router.push(`/dashboard?tab=${tabName}`);
+      setIsMobileMenuOpen(false);
+      return;
     }
   };
 

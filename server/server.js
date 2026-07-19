@@ -22,6 +22,11 @@ app.use(cors({
 // Body parser middleware
 app.use(express.json());
 
+// Initialize Passport
+const passport = require("passport");
+require("./config/passport");
+app.use(passport.initialize());
+
 // Main base health route
 app.get("/", (req, res) => {
   res.status(200).json({

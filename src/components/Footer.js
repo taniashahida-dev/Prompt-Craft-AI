@@ -55,9 +55,9 @@ export default function Footer() {
           <div className="space-y-3">
             <span className="text-xs font-bold text-white uppercase tracking-wider">Company</span>
             <ul className="space-y-2 text-xs">
-              <li><a href="#about" onClick={(e) => e.preventDefault()} className="text-slate-400 hover:text-white transition-colors">About Us</a></li>
+              <li><a href="/about" className="text-slate-400 hover:text-white transition-colors">About Us</a></li>
+              <li><a href="/contact" className="text-slate-400 hover:text-white transition-colors">Contact Us</a></li>
               <li><a href="#careers" onClick={(e) => e.preventDefault()} className="text-slate-400 hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#security" onClick={(e) => e.preventDefault()} className="text-slate-400 hover:text-white transition-colors">Security</a></li>
               <li><a href="#privacy" onClick={(e) => e.preventDefault()} className="text-slate-400 hover:text-white transition-colors">Privacy Policy</a></li>
             </ul>
           </div>

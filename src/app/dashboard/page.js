@@ -13,6 +13,9 @@ import {
   Loader2, Layers, Key, ShieldCheck, RefreshCw, Send,
   FileText, Image, Search, ChevronRight, Filter
 } from "lucide-react";
+import { 
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, Cell
+} from "recharts";
 
 function DashboardContent() {
   const router = useRouter();
@@ -386,9 +389,56 @@ function DashboardContent() {
   // Extract unique categories for template dropdown filter
   const templateCategories = ["All", ...new Set(templates.map(t => t.category))];
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
+  }, []);
+
   // Calculate metrics
   const totalGenerations = historyItems.length;
   const totalWords = historyItems.reduce((acc, curr) => acc + (curr.words || 0), 0);
+  const totalTemplates = templates.length;
+  const uniqueCategories = new Set([
+    ...templates.map(t => t.category),
+    ...historyItems.map(h => h.category)
+  ]);
+  const totalCategories = uniqueCategories.size;
+
+  const getGenerationsOverTime = () => {
+    const dateMap = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateString = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      dateMap[dateString] = 0;
+    }
+
+    historyItems.forEach(item => {
+      const dateString = new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      if (dateMap[dateString] !== undefined) {
+        dateMap[dateString] += 1;
+      }
+    });
+
+    return Object.entries(dateMap).map(([date, count]) => ({
+      date,
+      Generations: count
+    }));
+  };
+
+  const getTemplatesByCategory = () => {
+    const categoryMap = {};
+    templates.forEach(t => {
+      const cat = t.category || "General";
+      categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+    });
+    return Object.entries(categoryMap).map(([category, count]) => ({
+      category,
+      Templates: count
+    }));
+  };
 
   if (authLoading || !user) {
     return (
@@ -412,6 +462,7 @@ function DashboardContent() {
   const navigationItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "workspace", label: "AI Workspace", icon: Terminal },
+    { id: "improver", label: "AI Prompt Improver", icon: RefreshCw },
     { id: "history", label: "My History", icon: History },
     { id: "templates", label: "Manage Templates", icon: Sparkles },
     { id: "profile", label: "Profile", icon: User },
@@ -459,9 +510,17 @@ function DashboardContent() {
             <div className="space-y-6">
               {/* Profile Overview Header */}
               <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-white font-extrabold shadow shadow-purple-500/25">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
+                {user.profilePhoto || user.avatar ? (
+                  <img 
+                    src={user.profilePhoto || user.avatar} 
+                    alt={user.name} 
+                    className="h-10 w-10 rounded-xl object-cover border border-white/10 shadow shadow-purple-500/25" 
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-white font-extrabold shadow shadow-purple-500/25">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className="truncate">
                   <h4 className="text-sm font-bold text-white truncate">{user.name}</h4>
                   <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
@@ -477,7 +536,15 @@ function DashboardContent() {
                     <button
                       key={item.id}
                       onClick={() => {
-                        setActiveTab(item.id);
+                        if (item.id === "workspace") {
+                          router.push("/dashboard/workspace");
+                        } else if (item.id === "improver") {
+                          router.push("/dashboard/prompt-improver");
+                        } else if (item.id === "history") {
+                          router.push("/dashboard/history");
+                        } else {
+                          setActiveTab(item.id);
+                        }
                         setIsSidebarOpen(false);
                       }}
                       className={`
@@ -524,48 +591,102 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all flex flex-col justify-between min-h-[120px]">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Prompts Saved</span>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Templates</span>
+                      <Layers className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-extrabold text-white mt-4">{totalTemplates}</h3>
+                      <p className="text-[10px] text-slate-500 mt-1">Predefined prompt layouts</p>
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total AI Generations</span>
                       <Terminal className="h-5 w-5 text-purple-400" />
                     </div>
                     <div>
                       <h3 className="text-3xl font-extrabold text-white mt-4">{totalGenerations}</h3>
-                      <p className="text-[10px] text-slate-500 mt-1">Total items in history</p>
+                      <p className="text-[10px] text-slate-500 mt-1">Logged generation inputs</p>
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Categories</span>
+                      <Sparkles className="h-5 w-5 text-indigo-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-extrabold text-white mt-4">{totalCategories}</h3>
+                      <p className="text-[10px] text-slate-500 mt-1">Unique configuration domains</p>
                     </div>
                   </div>
 
                   <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all flex flex-col justify-between min-h-[120px]">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Words Generated</span>
-                      <Sparkles className="h-5 w-5 text-indigo-400" />
+                      <FileText className="h-5 w-5 text-emerald-400" />
                     </div>
                     <div>
                       <h3 className="text-3xl font-extrabold text-white mt-4">{totalWords}</h3>
-                      <p className="text-[10px] text-slate-500 mt-1">Aggregated generation tokens</p>
-                    </div>
-                  </div>
-
-                  <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all flex flex-col justify-between min-h-[120px]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Templates Available</span>
-                      <Layers className="h-5 w-5 text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-3xl font-extrabold text-white mt-4">{templates.length}</h3>
-                      <p className="text-[10px] text-slate-500 mt-1">Predefined layout blueprints</p>
-                    </div>
-                  </div>
-
-                  <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all flex flex-col justify-between min-h-[120px]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Subscription Tier</span>
-                      <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-3xl font-extrabold text-white mt-4">Free Plan</h3>
-                      <p className="text-[10px] text-slate-500 mt-1">Upgrade for GPT-4 access</p>
+                      <p className="text-[10px] text-slate-500 mt-1">Generated content tokens</p>
                     </div>
                   </div>
                 </div>
+
+                {/* Charts Section */}
+                {isMounted && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Generations over time Area Chart */}
+                    <div className="p-5 rounded-2xl bg-white/2 border border-white/5 space-y-4">
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider">Content Generations Over Time</h3>
+                      <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={getGenerationsOverTime()} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="colorGenerations" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
+                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
+                            <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: "#0c0824", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
+                              labelStyle={{ color: "#94a3b8", fontSize: "10px", fontWeight: "bold" }}
+                              itemStyle={{ color: "#fff", fontSize: "11px" }}
+                            />
+                            <Area type="monotone" dataKey="Generations" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorGenerations)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Templates by Category Bar Chart */}
+                    <div className="p-5 rounded-2xl bg-white/2 border border-white/5 space-y-4">
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider">Templates by Category</h3>
+                      <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={getTemplatesByCategory()} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                            <XAxis dataKey="category" stroke="#64748b" fontSize={10} tickLine={false} />
+                            <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: "#0c0824", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
+                              labelStyle={{ color: "#94a3b8", fontSize: "10px", fontWeight: "bold" }}
+                              itemStyle={{ color: "#fff", fontSize: "11px" }}
+                            />
+                            <Bar dataKey="Templates" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                              {getTemplatesByCategory().map((entry, index) => {
+                                const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#10b981", "#f59e0b"];
+                                return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                              })}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* API Key Panel */}
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/20 to-purple-950/20 border border-white/5 space-y-4">
@@ -650,7 +771,7 @@ function DashboardContent() {
                     </p>
                     <button
                       onClick={() => setActiveTab("templates")}
-                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-bold hover:shadow-lg cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl bg-linear-to-r from-blue-600 to-purple-600 text-white text-xs font-bold hover:shadow-lg cursor-pointer"
                     >
                       Go to Manage Templates
                     </button>
@@ -661,7 +782,7 @@ function DashboardContent() {
                     {/* Left Column: Selector list */}
                     <div className="lg:col-span-4 space-y-3">
                       <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Select Prompt Template</label>
-                      <div className="max-h-[500px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                      <div className="max-h-125 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                         {templates.map((tpl) => (
                           <button
                             key={tpl._id}
@@ -1128,9 +1249,17 @@ function DashboardContent() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-white/5 border border-white/5">
-                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-white text-3xl font-extrabold shadow shadow-purple-500/20">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
+                  {user.profilePhoto || user.avatar ? (
+                    <img 
+                      src={user.profilePhoto || user.avatar} 
+                      alt={user.name} 
+                      className="h-20 w-20 rounded-2xl object-cover border border-white/10 shadow" 
+                    />
+                  ) : (
+                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-white text-3xl font-extrabold shadow shadow-purple-500/20">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="space-y-1 text-center sm:text-left">
                     <h3 className="text-lg font-bold text-white">{user.name}</h3>
                     <p className="text-xs text-purple-400 uppercase font-semibold">PromptCraft Creator</p>
@@ -1146,7 +1275,9 @@ function DashboardContent() {
 
                   <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-1">
                     <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Account Created At</span>
-                    <p className="text-sm font-semibold text-white">July 2026</p>
+                    <p className="text-sm font-semibold text-white">
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long" }) : "July 2026"}
+                    </p>
                   </div>
                 </div>
               </div>

@@ -29,6 +29,15 @@ const templateSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+    difficulty: {
+      type: String,
+      default: "Intermediate",
+      enum: ["Beginner", "Intermediate", "Advanced"]
+    },
+    usages: {
+      type: Number,
+      default: 0
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

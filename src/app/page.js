@@ -30,24 +30,36 @@ export default function Home() {
   const [copiedKey, setCopiedKey] = useState(false);
   const [historyItems, setHistoryItems] = useState([]);
   const [fetchingHistory, setFetchingHistory] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [fetchingTemplates, setFetchingTemplates] = useState(false);
 
-  // Fetch real history data from backend Mongoose API
+  // Fetch real history & templates data from backend Mongoose API
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchDashboardStats = async () => {
       if (isAuthenticated) {
         setFetchingHistory(true);
+        setFetchingTemplates(true);
         try {
-          const res = await api.get("/prompts");
-          if (res.data && res.data.success) {
-            setHistoryItems(res.data.data);
+          const [historyRes, templatesRes] = await Promise.all([
+            api.get("/prompts"),
+            api.get("/templates")
+          ]);
+          if (historyRes.data && historyRes.data.success) {
+            setHistoryItems(historyRes.data.data);
+          }
+          if (templatesRes.data && templatesRes.data.success) {
+            setTemplates(templatesRes.data.data);
           }
         } catch (err) {
-          console.error("Failed to fetch history:", err.message);
+          console.error("Failed to fetch dashboard stats:", err.message);
         }
         setFetchingHistory(false);
+        setFetchingTemplates(false);
       }
     };
-    fetchHistory();
+    setTimeout(() => {
+      fetchDashboardStats();
+    }, 0);
   }, [isAuthenticated]);
 
   // Loading gate — shown while AuthContext verifies token on mount
@@ -100,6 +112,9 @@ export default function Home() {
       console.error("Failed to delete history item:", err.message);
     }
   };
+  const myTemplatesCount = templates.filter(t => t.createdBy === user?._id || t.createdBy?._id === user?._id).length;
+  const myGenerationsCount = historyItems.length;
+  const accountCreatedDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "N/A";
 
   return (
     <div className="min-h-screen bg-[#030014] text-slate-100 flex flex-col font-sans select-none scroll-smooth relative">
@@ -150,7 +165,7 @@ export default function Home() {
                       Pro Workspace Unlocked
                     </span>
                     <h2 className="mt-4 text-3xl font-extrabold text-white tracking-tight">
-                      Welcome back, <span className="text-gradient">Alex Morgan</span>
+                      Welcome back, <span className="text-gradient">{user?.name || "User"}</span>
                     </h2>
                     <p className="mt-2 text-sm text-slate-400 max-w-xl">
                       Select templates below, configure custom routing, or copy active API credentials to initiate workspace generation tools.
@@ -331,73 +346,81 @@ export default function Home() {
                 {/* Profile Card */}
                 <div className="lg:col-span-5 glass-panel rounded-2xl p-6 space-y-6 hover:border-white/15 transition-all">
                   <div className="flex items-center gap-4">
-                    <img 
-                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" 
-                      alt="User avatar" 
-                      className="h-14 w-14 rounded-full object-cover ring-2 ring-purple-500"
-                    />
+                    {user?.profilePhoto || user?.avatar ? (
+                      <img 
+                        src={user.profilePhoto || user.avatar} 
+                        alt="User avatar" 
+                        className="h-14 w-14 rounded-full object-cover ring-2 ring-purple-500"
+                      />
+                    ) : (
+                      <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-white text-xl font-extrabold shadow ring-2 ring-purple-500">
+                        {user?.name?.charAt(0).toUpperCase() || "U"}
+                      </div>
+                    )}
                     <div>
-                      <h4 className="font-bold text-white">Alex Morgan</h4>
-                      <span className="text-xs text-purple-400 font-semibold block">Pro Creator Member</span>
+                      <h4 className="font-bold text-white">{user?.name || "User"}</h4>
+                      <span className="text-xs text-purple-400 font-semibold block uppercase">
+                        {user?.role || "User"}
+                      </span>
                     </div>
                   </div>
 
                   <div className="space-y-3.5 border-t border-white/5 pt-6 text-xs text-slate-300">
                     <div className="flex justify-between">
                       <span className="text-slate-500">Email Address</span>
-                      <span className="font-semibold text-white">alex.morgan@promptcraft.ai</span>
+                      <span className="font-semibold text-white">{user?.email || "N/A"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Current Plan</span>
-                      <span className="font-semibold text-white">Pro Creator ($29/mo)</span>
+                      <span className="text-slate-500">Account Type</span>
+                      <span className="font-semibold text-white capitalize">{user?.role || "User"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Payment Status</span>
+                      <span className="text-slate-500">Account Status</span>
                       <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold">
                         <ShieldCheck className="h-3.5 w-3.5" />
-                        Active Billing
+                        {user?.status || "Active"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* API Key Panel */}
+                {/* Workspace Information Card */}
                 <div className="lg:col-span-7 glass-panel rounded-2xl p-6 space-y-6 hover:border-white/15 transition-all flex flex-col justify-between">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-indigo-400 font-semibold text-sm">
-                      <Key className="h-4.5 w-4.5" />
-                      <span>Developer API Access Credentials</span>
+                      <Layers className="h-4.5 w-4.5" />
+                      <span>Workspace Information</span>
                     </div>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Use active workspace keys to run PromptCraft generation routines directly inside custom backend servers. Keep this token secret.
+                      Overview of your current workspace statistics, blueprint creations, and log activities.
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5 mt-4">
-                    <code className="text-xs text-slate-300 font-mono select-all">
-                      pc_live_51Ny93KjUu8B3a7Fh4oPq92...
-                    </code>
-                    <button 
-                      onClick={handleCopyKey}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 hover:bg-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
-                    >
-                      {copiedKey ? (
-                        <>
-                          <Check className="h-3.5 w-3.5 text-emerald-400" />
-                          <span className="text-emerald-400">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5" />
-                          <span>Copy Key</span>
-                        </>
-                      )}
-                    </button>
+                  <div className="space-y-3.5 border-t border-white/5 pt-4 text-xs text-slate-300">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Total Templates Created</span>
+                      <span className="font-semibold text-white">{myTemplatesCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Total AI Generations</span>
+                      <span className="font-semibold text-white">{myGenerationsCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Account Created Date</span>
+                      <span className="font-semibold text-white">{accountCreatedDate}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Last Login Status</span>
+                      <span className="font-semibold text-white">Current Session (Active)</span>
+                    </div>
                   </div>
 
                   <div className="flex gap-3 pt-4 border-t border-white/5">
-                    <button className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold cursor-pointer">
-                      <span>View API Documentation</span>
+                    <button 
+                      onClick={() => document.getElementById("workspace")?.scrollIntoView({ behavior: "smooth" })}
+                      className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold cursor-pointer"
+                    >
+                      <span>Enter AI Workspace</span>
                       <ExternalLink className="h-3.5 w-3.5" />
                     </button>
                   </div>

@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
+const { seedDemoTemplates } = require("../utils/seedTemplates");
 
 // Helper to generate JWT Token
 const generateToken = (id) => {
@@ -61,6 +63,19 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please enter all fields." });
     }
 
+    // Special check for Demo user auto-creation
+    if (email === "demo@promptcraft.ai") {
+      let demoUser = await User.findOne({ email });
+      if (!demoUser) {
+        demoUser = await User.create({
+          name: "Demo Creator",
+          email: "demo@promptcraft.ai",
+          password: "demopass123"
+        });
+      }
+      await seedDemoTemplates(demoUser._id);
+    }
+
     // Check for user
     const user = await User.findOne({ email });
     if (!user) {
@@ -105,8 +120,28 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+// @desc    Google OAuth Callback handler
+// @route   GET /api/auth/google/callback
+// @access  Public
+const googleOAuthCallback = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/login?error=Google authentication failed`);
+    }
+
+    const token = generateToken(req.user._id);
+
+    // Redirect user back to Next.js frontend with the JWT token in query parameters
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/login?token=${token}`);
+  } catch (error) {
+    console.error("Google OAuth callback error:", error.message);
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/login?error=Internal server error`);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
-  getUserProfile
+  getUserProfile,
+  googleOAuthCallback
 };
