@@ -154,7 +154,7 @@ Requirements:
     let generatedOutput = "";
     try {
       const geminiRes = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: process.env.GEMINI_MODEL ,
         contents: promptText
       });
 
